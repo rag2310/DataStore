@@ -1,9 +1,14 @@
+import com.google.protobuf.gradle.GenerateProtoTask
+import com.google.protobuf.gradle.id
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+
+    id("com.google.protobuf") version "0.9.4"
 }
 
 android {
@@ -47,6 +52,41 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    protobuf {
+        protoc {
+            artifact = "com.google.protobuf:protoc:4.27.2"
+        }
+
+        generateProtoTasks {
+            all().forEach { task->
+                task.builtins {
+                    id("kotlin") {
+                        option("lite")
+                    }
+                    id("java"){
+                        option("lite")
+                    }
+                }
+            }
+        }
+    }
+
+    androidComponents {
+        onVariants(selector().all()) { variant ->
+            afterEvaluate {
+                val protoTask =
+                    project.tasks.getByName("generate" + variant.name.replaceFirstChar { it.uppercaseChar() } + "Proto") as GenerateProtoTask
+
+                project.tasks.getByName("ksp" + variant.name.replaceFirstChar { it.uppercaseChar() } + "Kotlin") {
+                    dependsOn(protoTask)
+                    (this as org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompileTool<*>).setSource(
+                        protoTask.outputBaseDir
+                    )
+                }
+            }
+        }
+    }
 }
 
 dependencies {
@@ -75,4 +115,10 @@ dependencies {
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.hilt.navigation.compose)
+
+    // DATASTORE -----------------------------------------------------------------------------------
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.datastore)
+    implementation(libs.protobuf.javalite)
+    implementation(libs.protobuf.kotlin.lite)
 }

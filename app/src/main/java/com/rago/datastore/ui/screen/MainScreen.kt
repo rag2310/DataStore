@@ -14,6 +14,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.rago.datastore.state.MenuUIState
+import com.rago.datastore.viewmodel.DataStoreUIState
+import com.rago.datastore.viewmodel.DataStoreViewModel
 import com.rago.datastore.viewmodel.MenuViewModel
 
 
@@ -44,7 +46,10 @@ private fun MainScreenContent(navHostController: NavHostController) {
             }
 
             composable("datastore_screen"){
-                DataStoreScreen()
+
+                val dataStoreViewModel: DataStoreViewModel = hiltViewModel()
+                val dataStoreUIState: DataStoreUIState by dataStoreViewModel.uiState.collectAsState()
+                DataStoreScreen(dataStoreUIState)
             }
         }
     }
